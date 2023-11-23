@@ -1,0 +1,76 @@
+pipeline TrainStopPipeline {
+    
+    
+    TrainStopExtractor
+    -> TrainStopTextFileInterpreter
+    -> TrainStopCSVInterpreter
+    -> TrainStopColumnDeleter
+    -> TrainStopTableInterpreter
+    -> TrainStopLoader;
+    
+
+    block TrainStopExtractor oftype HttpExtractor {
+        url:"https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV";
+    }
+
+    block TrainStopTextFileInterpreter oftype TextFileInterpreter {}
+
+    block TrainStopCSVInterpreter oftype CSVInterpreter {
+        delimiter:";";
+    }
+
+    block TrainStopColumnDeleter oftype ColumnDeleter {
+        delete: [column J];
+    }
+
+    valuetype ValidVerkehr oftype text {
+        constraints: [ VerkehrValues ];
+    }
+
+    constraint VerkehrValues on text:
+        value == 'FV' or value == 'RV' or value=='nur DPN';
+    
+    valuetype ValidLaenge oftype decimal {
+        constraints: [ LaengeValues ];
+    }
+
+    constraint LaengeValues on decimal:
+        value >= -90 and value <= 90;
+
+    valuetype ValidBreite oftype decimal {
+        constraints: [ BreiteValues ];
+    }
+
+    constraint BreiteValues on decimal:
+        value >= -90 and value <= 90;
+
+    valuetype ValidIFOPT oftype text {
+    constraints: [ IFOPTValues ];
+    }
+
+    constraint IFOPTValues oftype RegexConstraint {
+    regex: /^[a-zA-Z]{2}:\d+:\d+(?::\d+)?$/;
+    }
+
+    block TrainStopTableInterpreter oftype TableInterpreter {
+        header: true;
+        columns:[
+           "EVA_NR" oftype integer,
+            "DS100" oftype text,
+            "IFOPT" oftype ValidIFOPT,
+            "NAME" oftype text,
+            "Verkehr" oftype ValidVerkehr,
+            "Laenge" oftype ValidLaenge,
+            "Breite" oftype ValidBreite,
+            "Betreiber_Name" oftype text,
+            "Betreiber_Nr" oftype integer,
+        ];
+
+    } 
+
+    block TrainStopLoader oftype SQLiteLoader {
+        table: "trainstops";
+        file: "./trainstops.sqlite";
+    }
+
+}
