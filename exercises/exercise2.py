@@ -12,7 +12,7 @@ df['Laenge'] = pd.to_numeric(df['Laenge'].str.replace(',', '.'), errors='coerce'
 df['Breite'] = pd.to_numeric(df['Breite'].str.replace(',', '.'), errors='coerce')
 df = df[(df['Laenge'] >= -90) & (df['Laenge'] <= 90)]
 #Converting to Numeric
-df['Betreiber_Nr'] = pd.to_numeric(df['Betreiber_Nr'], errors='coerce').astype(int)
+df['Betreiber_Nr'] = pd.to_numeric(df['Betreiber_Nr'], errors='coerce')
 df = df[(df['Breite'] >= -90) & (df['Breite'] <= 90)]
 #Valid "IFOPT" values following pattern
 pattern = r'^[a-zA-Z]{2}:\d+:\d+(?::\d+)?$'
