@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine, Column, Table, MetaData, Integer, Text, Float
+from sqlalchemy import create_engine, Column, Table, MetaData, Integer, BigInteger, Text, Float
 
 df=pd.read_csv('https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV',delimiter=';')
 # Dropping the Status
@@ -20,7 +20,7 @@ engine = create_engine('sqlite:///trainstops.sqlite', echo=True)
 meta = MetaData()
 trainstops = Table(
     'trainstops', meta,
-    Column('EVA_NR', Integer),
+    Column('EVA_NR', BigInteger),
     Column('TDSA', Text),
     Column('IFOPT', Text),
     Column('NAME', Text),
