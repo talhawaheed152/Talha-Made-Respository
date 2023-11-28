@@ -11,6 +11,7 @@ df=df[df['Verkehr'].isin(['FV','RV','nur DPN'])]
 df['Laenge'] = pd.to_numeric(df['Laenge'].str.replace(',', '.'), errors='coerce')
 df['Breite'] = pd.to_numeric(df['Breite'].str.replace(',', '.'), errors='coerce')
 df = df[(df['Laenge'] >= -90) & (df['Laenge'] <= 90)]
+df['Betreiber_Nr']= df['Betreiber_Nr'].astype(int)
 df = df[(df['Breite'] >= -90) & (df['Breite'] <= 90)]
 #Valid "IFOPT" values following pattern
 pattern = r'^[a-zA-Z]{2}:\d+:\d+(?::\d+)?$'
