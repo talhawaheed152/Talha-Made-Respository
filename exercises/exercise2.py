@@ -15,6 +15,7 @@ df = df[(df['Breite'] >= -90) & (df['Breite'] <= 90)]
 #Valid "IFOPT" values following pattern
 pattern = r'^[a-zA-Z]{2}:\d+:\d+(?::\d+)?$'
 df = df[df['IFOPT'].str.contains(pattern, na=False)]
+df = df.dropna()
 engine = create_engine('sqlite:///trainstops.sqlite', echo=True)
 meta = MetaData()
 trainstops = Table(
