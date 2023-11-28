@@ -28,7 +28,7 @@ trainstops = Table(
     Column('Laenge', Float),
     Column('Breite', Float),
     Column('Betreiber_Name', String),
-    Column('Betreiber_Nr', Integer)
+    Column('Betreiber_Nr', Float)
 )
 meta.create_all(engine)
 conn = engine.connect()
