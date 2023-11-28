@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine, Column, Table, MetaData, Integer, BIGINT, TEXT, FLOAT, String
-
+####
 df=pd.read_csv('https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV',delimiter=';')
 # Dropping the Status
 df=df.drop(columns='Status')
