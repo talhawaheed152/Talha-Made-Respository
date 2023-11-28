@@ -20,7 +20,7 @@ engine = create_engine('sqlite:///trainstops.sqlite', echo=True)
 meta = MetaData()
 trainstops = Table(
     'trainstops', meta,
-    Column('EVA_NR', BigInteger),
+    Column('EVA_NR', Integer),
     Column('TDSA', String),
     Column('IFOPT', String),
     Column('NAME', String),
