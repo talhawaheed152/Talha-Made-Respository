@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 from io import BytesIO
 from zipfile import ZipFile
+import numpy as np
 import pyarrow.parquet as pq
 
 
@@ -20,14 +21,64 @@ class data_pipeline():
         #Cleaning Population DataSet
         self.population_df=self.population_df.drop(columns=['population_2010','absolute_change','percent_change'])
         self.population_df=self.General_Cleaning(self.population_df)
-        # Cleaning Flights DataSet
+        # Cleaning Flights DataSet & Making SQLITE files
+        self.Flights_Cleaning()
+        self.Create_Dimention_Tables()
+        print("All Tasks Completed! ")
+        
+    def Create_Dimention_Tables(self):
+        #Creating Cities Table (Dimention)
+        City_df= pd.DataFrame()
+        City_df['primaryID'] = np.arange(1, len(population_df['city'].unique()) + 1, dtype=int)
+        City_df['city']=population_df['city'].unique()
+        City_df = pd.merge(City_df, population_df[['city','state', 'latitude','longitude','rank_2020','largest_city_in_state','state_capital','federal_capital','population_2020','land_area_sqkm','pop_density_sqkm']], on='city', how='left')
+        self.Create_SQL_Table('Cities',City_df)
+        #Creating Months Table (Dimention)
+        months_full = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        months_df = pd.DataFrame({'Month': months_full})
+        self.Create_SQL_Table('Months',months_df)
+        #Creating States Table (Dimention)
+        State_df= pd.DataFrame()
+        State_df['primaryID'] = np.arange(1, len(population_df['state'].unique()) + 1, dtype=int)
+        State_df['state']=population_df['state'].unique()
+        self.Create_SQL_Table('States',State_df)
+        # State Origin Destination Flights Data Frame
+        State_Origin_Dest_df = pd.DataFrame()
+        State_Origin_Dest_df['OriginStateName']=self.flights_df['OriginStateName'].unique()
+        State_Origin_Dest_df = pd.merge(State_Origin_Dest_df, self.flights_df[['OriginStateName','DestStateName','Distance']], on='OriginStateName', how='left')
+        State_Origin_Dest_df = State_Origin_Dest_df.drop_duplicates(subset='OriginStateName')
+        State_Origin_Dest_df['primaryID'] = np.arange(1, len(self.flights_df['OriginStateName'].unique()) + 1, dtype=int)
+        State_Origin_Dest_df= State_Origin_Dest_df[['primaryID','OriginStateName','DestStateName','Distance']]
+        self.Create_SQL_Table('State_Origin_Dest',State_Origin_Dest_df)
+        # City Origin Destination Flights Data Frame
+        City_Origin_Dest_df = pd.DataFrame()
+        City_Origin_Dest_df['OriginCityName']=self.flights_df['OriginCityName'].unique()
+        City_Origin_Dest_df = pd.merge(City_Origin_Dest_df, self.flights_df[['OriginCityName','DestCityName','Distance']], on='OriginCityName', how='left')
+        City_Origin_Dest_df = City_Origin_Dest_df.drop_duplicates(subset='OriginCityName')
+        City_Origin_Dest_df['primaryID'] = np.arange(1, len(self.flights_df['OriginCityName'].unique()) + 1, dtype=int)
+        City_Origin_Dest_df= City_Origin_Dest_df[['primaryID','OriginCityName','DestCityName','Distance']]
+        self.Create_SQL_Table('City_Origin_Dest',City_Origin_Dest_df)
+
+        
+    def Flights_Cleaning(self):
+        print("Deep Cleaning Flight DataSet Please Wait...")
         self.flights_df=self.flights_df[['Year', 'FlightDate', 'Flight_Number_Operating_Airline', 'Operating_Airline', 'Origin', 'OriginCityName', 'OriginStateName', 'Dest', 'DestCityName', 'DestStateName', 'Cancelled', 'AirTime', 'Distance', 'DistanceGroup']]
         self.flights_df=self.General_Cleaning(self.flights_df)
-        #Making SQLITE files
-        self.Create_SQL_Table('flights',self.flights_df)
-        self.Create_SQL_Table('population',self.population_df)
-        print("All Tasks Completed! ")
-     
+        self.flights_df = self.flights_df[self.flights_df['OriginStateName'].isin(self.population_df['state'])]
+        self.flights_df = self.flights_df[self.flights_df['DestStateName'].isin(self.population_df['state'])]
+        self.flights_df = self.flights_df[self.flights_df['Cancelled']!=True]
+        self.flights_df=self.flights_df.drop(columns=['Origin','Dest','DistanceGroup','Cancelled','Year'])
+        self.flights_df['OriginCityName']=(self.flights_df['OriginCityName']).str.replace(r'\s*,.*', '', regex=True)
+        self.flights_df['DestCityName']=(self.flights_df['DestCityName']).str.replace(r'\s*,.*', '', regex=True)
+        self.flights_df = self.flights_df[self.flights_df['OriginCityName'].isin(self.population_df['city'])]
+        self.flights_df = self.flights_df[self.flights_df['DestCityName'].isin(self.population_df['city'])]
+        self.flights_df['Same_State'] =  self.flights_df['OriginStateName'] ==  self.flights_df['DestStateName']
+        max_distance = self.flights_df['Distance'].max()
+        self.flights_df['Distance'] = pd.cut(self.flights_df['Distance'], bins=[0, 0.33 * max_distance, 0.66 * max_distance, max_distance],labels=['low', 'medium', 'high'],include_lowest=True)
+        print("Deep Cleaning Done")
+        self.Create_SQL_Table('Flights',self.flights_df) #Fact Table
+        
+    
     # Creates the SQL Table and places it in the /data directory
     def Create_SQL_Table(self,table_name,x_dataframe):
         print(f"Creating an SQLITE file for {table_name} please wait...")
@@ -80,8 +131,7 @@ class data_pipeline():
         if not os.path.exists(output_file_path):
             gdown.download(file_url, output_file_path, quiet=False)
             print(f"Token File downloaded successfully to {output_file_path}")
-        
-    
+
 def main():
     test_run = data_pipeline()
 
