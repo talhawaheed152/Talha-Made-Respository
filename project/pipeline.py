@@ -31,17 +31,17 @@ class data_pipeline():
         City_df= pd.DataFrame()
         City_df['city']=self.population_df['city'].unique()
         City_df = pd.merge(City_df, self.population_df[['city','state', 'latitude','longitude','rank_2020','largest_city_in_state','state_capital','federal_capital','population_2020','land_area_sqkm','pop_density_sqkm']], on='city', how='left')
-        self.Create_SQL_Table('Cities',City_df)
+        self.Create_SQL_Table('Cities_t',City_df,'city')
         del City_df
         #Creating Months Table (Dimention)
         months_full = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
         months_df = pd.DataFrame({'Month': months_full})
-        self.Create_SQL_Table('Months',months_df)
+        self.Create_SQL_Table('Months_t',months_df,'Month')
         del months_df
         #Creating States Table (Dimention)
         State_df= pd.DataFrame()
         State_df['state']=self.population_df['state'].unique()
-        self.Create_SQL_Table('States',State_df)
+        self.Create_SQL_Table('States_t',State_df)
         del State_df
         # State Origin Destination Flights Data Frame
         State_Origin_Dest_df = pd.DataFrame()
@@ -50,7 +50,7 @@ class data_pipeline():
         State_Origin_Dest_df = State_Origin_Dest_df.drop_duplicates(subset='OriginStateName')
         State_Origin_Dest_df= State_Origin_Dest_df[['OriginStateName','DestStateName','Distance']]
         State_Origin_Dest_df['Origin_Destination'] = State_Origin_Dest_df['OriginStateName'] + '_' + State_Origin_Dest_df['DestStateName']
-        self.Create_SQL_Table('State_Origin_Dest',State_Origin_Dest_df)
+        self.Create_SQL_Table('State_Origin_Dest_t',State_Origin_Dest_df)
         del State_Origin_Dest_df
         # City Origin Destination Flights Data Frame
         City_Origin_Dest_df = pd.DataFrame()
@@ -59,7 +59,7 @@ class data_pipeline():
         City_Origin_Dest_df = City_Origin_Dest_df.drop_duplicates(subset='OriginCityName')
         City_Origin_Dest_df= City_Origin_Dest_df[['OriginCityName','DestCityName','Distance']]
         City_Origin_Dest_df['Origin_Destination'] = City_Origin_Dest_df['OriginCityName'] + '_' + City_Origin_Dest_df['DestCityName']
-        self.Create_SQL_Table('City_Origin_Dest',City_Origin_Dest_df)
+        self.Create_SQL_Table('City_Origin_Dest_t',City_Origin_Dest_df)
         del City_Origin_Dest_df
         
     def Flights_Cleaning(self):
@@ -78,19 +78,51 @@ class data_pipeline():
         max_distance = self.flights_df['Distance'].max()
         self.flights_df['Distance'] = pd.cut(self.flights_df['Distance'], bins=[0, 0.33 * max_distance, 0.66 * max_distance, max_distance],labels=['low', 'medium', 'high'],include_lowest=True)
         print("Deep Cleaning Done")
-        self.Create_SQL_Table('Flights',self.flights_df) #Fact Table
+        self.flights_df['FlightDate'] = self.flights_df['FlightDate'].astype(str)
+        self.flights_df['FlightId'] = range(1, len(self.flights_df) + 1)
+        # If you want 'x_id' to be the first column, you can rearrange the columns
+        self.flights_df = self.flights_df[['FlightId'] + [col for col in self.flights_df.columns if col != 'FlightId']]
+        self.Create_SQL_Table('Flights_t',self.flights_df,'FlightId') #Fact Table
         
     
     # Creates the SQL Table and places it in the /data directory
-    def Create_SQL_Table(self,table_name,x_dataframe):
-        print(f"Creating an SQLITE file for {table_name} please wait...")
+    def Create_SQL_Table(self,table_name,x_dataframe,primary_key=None):
+        print(f"Creating an SQLite file for {table_name}, please wait...")
+        new_df=pd.DataFrame()
+        sql_type_mapping = {'int64': 'INT', 'float64': 'FLOAT', 'object': 'VARCHAR(255)', 'bool': 'BOOLEAN','datetime64[us]': 'TEXT','category': 'VARCHAR(255)'}
         current_dir = os.getcwd()
         data_dir = os.path.join(os.path.dirname(current_dir), 'data')
         os.makedirs(data_dir, exist_ok=True)
-        db_path = os.path.join(data_dir, table_name+'.sqlite')
+        db_path = os.path.join(data_dir, table_name + '.sqlite')
         conn = sqlite3.connect(db_path)
-        x_dataframe.to_sql(table_name, conn, index=False, if_exists='replace')
-        print(f"SQLITE FILE FOR {table_name} created! ")
+        cursor = conn.cursor()
+        if primary_key!= None:
+            create_table_query = f"CREATE TABLE IF NOT EXISTS {table_name} ({primary_key} {sql_type_mapping[x_dataframe[primary_key].dtype.name]} PRIMARY KEY "
+            new_df = pd.concat([new_df, x_dataframe[primary_key]], axis=1)
+            if len(x_dataframe.columns)>1:
+                create_table_query+=' ,'
+            create_table_query += ', '.join([f"{col} {sql_type_mapping[x_dataframe[col].dtype.name]}" for col in x_dataframe.columns if col != primary_key])
+            for col in x_dataframe.columns:
+                if col != primary_key:
+                    new_df = pd.concat([new_df, x_dataframe[col]], axis=1)
+            del x_dataframe
+        else:
+            create_table_query = f"CREATE TABLE IF NOT EXISTS {table_name} ( "
+            create_table_query += ', '.join([f"{col} {sql_type_mapping[x_dataframe[col].dtype.name]}" for col in x_dataframe.columns])
+        create_table_query += ")"
+        print(create_table_query)
+        cursor.execute(create_table_query)
+        # Insert data into the table
+        if primary_key != None:
+            for index, row in new_df.iterrows():
+                insert_query = f"INSERT INTO {table_name} VALUES ({', '.join(['?' for _ in range(len(row))])})"
+                cursor.execute(insert_query, tuple(row))
+            del new_df
+        else:
+            for index, row in x_dataframe.iterrows():
+                insert_query = f"INSERT INTO {table_name} VALUES ({', '.join(['?' for _ in range(len(row))])})"
+                cursor.execute(insert_query, tuple(row))
+        conn.commit()
         conn.close()
     
     # Cleans data by removing none values and duplicates
