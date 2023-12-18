@@ -94,6 +94,9 @@ class data_pipeline():
         data_dir = os.path.join(os.path.dirname(current_dir), 'data')
         os.makedirs(data_dir, exist_ok=True)
         db_path = os.path.join(data_dir, table_name + '.sqlite')
+        if os.path.exists(db_path):
+            print(f"SQLite file '{table_name}.sqlite' already exists. Skipping creation.")
+            return
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         if primary_key!= None:
