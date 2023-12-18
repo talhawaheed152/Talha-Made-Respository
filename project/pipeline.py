@@ -146,9 +146,9 @@ class data_pipeline():
             self.population_df = pd.read_csv(population_file_path)
             print("Population file already exists. Skipping download.")
         # Airlines
-        parquet_file_path = 'Combined_Flights_2020.parquet'
+        parquet_file_path = 'Combined_Flights_2020.parquet.zip'
         if not os.path.exists(parquet_file_path):
-            zip_url = "https://storage.googleapis.com/kaggle-data-sets/2529204/4295427/compressed/Combined_Flights_2020.parquet.zip?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20231130%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20231130T133516Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=5b01962f7e57b292e5ffcc92dd596558845aec97e93cdd35658e7a6b721ce5eabf24da52d7122c844363251d8da6524bbf96000b3e65efebb92bab97ee12298780ef1af36cbdada6836f60b8129f3b7f35e4e88109dd2b7c0b67a6d22777f5d54ee6cb6bc24ab27a72c31616c9d7f49a793fc0aa43e29bcce7910fe93c51e3f81754cde28c8921c43594ac677d199bb895397a072b9650e82c56effac7f2f007a6c8ad3e13d01a00cb1c60d0704806fd1a66103907090a87326d78521c95486650c47b8eb6e1a2c928b0dd30aa6cd18386c12e6451a1abb2d3a7d89119f823c474f6ae520545b3c0622fa8952cd77c2a06464a33ec5c24e539544e345f45a95c"
+            zip_url="https://storage.googleapis.com/kaggle-data-sets/2529204/4295427/compressed/Combined_Flights_2020.parquet.zip?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20231218%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20231218T183322Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=3056556a4a24a6dd1648f07d05fc372e04d309c0564faf1454380cf6f2d9d68523d72589150f460cf274191305e1222119c938a0aa88753e287213198397a49b8c054222923f5e645fb8d4a88b322b6f8871047288ef3611b5da84b688a5047aad1c97ef1ed8b572c3c2fcd4128ff25eb7c981e0f835bd6bbd2dd26940f5691c72e5ac237a44930bb960b64c708f90db7d0637f1ca0ac9d9ba6f3598153a984909114798e831d0335a696fa21437061a9aab9a9eccbea1294f0760eb7ac0a54675226b2527837c83e90ce65f99513b12de1dcf153dc62d630c78ab7071c8ec20bc35b270ac3c5ccc3c8081d6fd85e22280db434ff3902c5f6482e5c8cb168d2c"
             response = requests.get(zip_url)
             zip_file = ZipFile(BytesIO(response.content))
             parquet_file = zip_file.extract(zip_file.namelist()[0])
