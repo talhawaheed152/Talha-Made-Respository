@@ -1,3 +1,8 @@
-#!/bin/bash
+install opendatasets
+pip install pandas
+pip install gdown
+pip install github
+pip install sqlite3
+pip install pandas pyarrow requests
 
-python3 test.sh
+python3 project/test.sh
