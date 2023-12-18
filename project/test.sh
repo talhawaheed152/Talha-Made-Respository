@@ -1,4 +1,4 @@
-install opendatasets
+pip install opendatasets
 pip install pandas
 pip install gdown
 pip install github
