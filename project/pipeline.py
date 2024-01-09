@@ -1,3 +1,7 @@
+#### PLEASE READ PROJECT README.md BEFORE RUNNING ###
+
+
+
 import opendatasets as od
 import os
 import sqlite3
