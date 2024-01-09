@@ -1,6 +1,4 @@
-#### PLEASE READ PROJECT README.md BEFORE RUNNING ###
-
-
+#### PLEASE READ README.md FILE BEFORE RUNNING ####
 
 import opendatasets as od
 import os
@@ -12,8 +10,6 @@ from io import BytesIO
 from zipfile import ZipFile
 import numpy as np
 import pyarrow.parquet as pq
-
-
 
 
 class data_pipeline():
@@ -98,7 +94,7 @@ class data_pipeline():
         current_dir = os.getcwd()
         data_dir = os.path.join(os.path.dirname(current_dir), 'data')
         os.makedirs(data_dir, exist_ok=True)
-        db_path = os.path.join(data_dir, 'database.sqlite')
+        db_path = os.path.join(data_dir, 'talha.sqlite')
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         if primary_key is not None:
@@ -137,8 +133,6 @@ class data_pipeline():
         print('DataFrame Cleaned!')
         return x_dataframe
         
-    
-    
     # Downloads the CSV files from their Respective URLs
     def Download_CSV_Files(self):
         # Population
@@ -154,7 +148,7 @@ class data_pipeline():
         # Airlines
         parquet_file_path = 'Combined_Flights_2020.parquet.zip'
         if not os.path.exists(parquet_file_path):
-            zip_url="https://storage.googleapis.com/kaggle-data-sets/2529204/4295427/compressed/Combined_Flights_2020.parquet.zip?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20240106%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20240106T163345Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=2aca900231c69c4dee50392f5c0d2156431cf3213aa6db1c875224479e5b62bd3f7c199311fe57fb74b9044b0dca95b0ccaf9a1e639649414f75ab663b17b4cd575a38ae206ee43162ae10a5e5ebef61213636fb82d4c62da34b21f8f107c5c902073189dcad96419b199b933fac1cad99cb344396c114226b13356b772a12ddeb91b2a52f4d5ca19f9bc163411b5c0c4bf7252b7cb05d3a4b72eadfea1338751b8543d9af059bbff7182a1646aed02052104159ffdb7de1da5f73490bdbe87ada2cbfa29d9f23255d00642d8c91bfbc2f2b4754fa19c2cc5a09dc668169aba66f7e80546346b30f3a10495b8f30c234a31cdd484015f7f2e8a817e32b936862"           
+            zip_url="https://storage.googleapis.com/kaggle-data-sets/2529204/4295427/compressed/Combined_Flights_2020.parquet.zip?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20240109%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20240109T211546Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=7b01ca6e0680dd883b61962b050f3b1fc7781a88002d3a8a3cdef4b62f2b2803422f7e1f348174d9b8ab700995a26ba35b95eaa2d339748ce52df4ae11b078521a1f987bf0c69b79fbf995e501add36332925cd751fdc1d628db7b475cbd4da907faed64d19dddb5006f833c07e92f78ee90630d419eb3d9eaf567a109ba62134097f0349447820158d1b6fc86bae19b81ed630f5552e9a691755e860ef90680f656c14157ec4c85aa369122e50bb3677ea06a2c4bfa042554982feb064f61994a1f87e892b400b0db57f49cc1710d2a6b3114fa0a3ae78e72c2404cbd18b35eda05fcf14d0a4c699e52f73cecca4883a7cc58eae47f51e9d55a34e1275342f7"            
             response = requests.get(zip_url)
             zip_file = ZipFile(BytesIO(response.content))
             parquet_file = zip_file.extract(zip_file.namelist()[0])
