@@ -19,7 +19,6 @@ class TestDataPipeline(unittest.TestCase):
 
 
     def test_create_sql_table(self):
-        # Create a DataFrame for testing
         test_data = {'Column1': [1, 2, 3], 'Column2': ['A', 'B', 'C']}
         test_dataframe = pd.DataFrame(test_data)
         pipeline_instance = data_pipeline()
