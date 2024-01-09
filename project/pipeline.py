@@ -96,7 +96,7 @@ class data_pipeline():
         current_dir = os.getcwd()
         data_dir = os.path.join(os.path.dirname(current_dir), 'data')
         os.makedirs(data_dir, exist_ok=True)
-        db_path = os.path.join(data_dir, 'finnn.sqlite')
+        db_path = os.path.join(data_dir, 'database.sqlite')
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         if primary_key is not None:
