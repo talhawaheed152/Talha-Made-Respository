@@ -25,7 +25,7 @@ class TestDataPipeline(unittest.TestCase):
         pipeline_instance = data_pipeline()
         test_table_name = 'TestTable'
         pipeline_instance.Create_SQL_Table(test_table_name, test_dataframe, primary_key='Column1')
-        db_path = os.path.join(os.path.dirname(os.getcwd()), 'data', test_table_name + '.sqlite')
+        db_path = os.path.join(os.path.dirname(os.getcwd()), 'data', 'database.sqlite')
         self.assertTrue(os.path.exists(db_path), f"SQLite file '{test_table_name}.sqlite' not found.")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
