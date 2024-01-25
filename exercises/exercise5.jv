@@ -4,17 +4,10 @@ valuetype ZoneRestriction oftype integer {
     ];
 }
 
-constraint Zone oftype RangeConstraint {
+constraint AreaLimit oftype RangeConstraint {
     lowerBound: 2001;
     lowerBoundInclusive: true;
     upperBound: 2001;
-    upperBoundInclusive: true;
-}
-
-constraint  LatitudeLongitudeRange oftype RangeConstraint {
-    lowerBound: -90;
-    lowerBoundInclusive: true;
-    upperBound: 90;
     upperBoundInclusive: true;
 }
 
@@ -24,51 +17,54 @@ valuetype Coordinate oftype decimal {
     ];
 }
 
-pipeline Exercise_5{
+constraint LatitudeLongitudeRange oftype RangeConstraint {
+    lowerBound: -90;
+    lowerBoundInclusive: true;
+    upperBound: 90;
+    upperBoundInclusive: true;
+}
 
-    HttpDownloader
-    -> ZipFileInterpreter
-    -> TextStop
-    -> TextDataInterpreter
-    -> CSVDataParser
-    -> StopMappingData
-    -> TableCreation;
-
-    block HttpDownloader oftype HttpExtractor 
-    {
+pipeline PublicTransportDataIntegration {
+    block GTFSDownloader oftype HttpExtractor {
         url: "https://gtfs.rhoenenergie-bus.de/GTFS.zip";
     }
 
-    block ZipFileInterpreter oftype ArchiveInterpreter 
-    {
+    block ZipFileProcessor oftype ArchiveInterpreter {
         archiveType: "zip";
     }
 
-    block TextStop oftype FilePicker 
-    {
+    block StopsTxtSelector oftype FilePicker {
         path: "/stops.txt";
     }
 
-    block TextDataInterpreter oftype TextFileInterpreter 
-    {
-    }
+    block TextDataInterpreter oftype TextFileInterpreter {}
 
-    block CSVDataParser oftype CSVInterpreter 
-    {
+    block CSVDataParser oftype CSVInterpreter {
         enclosing: '"';
         enclosingEscape: '"';
     }
 
-    block StopMappingData oftype TableInterpreter 
-    {
+    block StopsDataMapping oftype TableInterpreter {
         header: true;
-        columns: ["stop_id" oftype integer, "stop_name" oftype text, "stop_lat" oftype Coordinate, "stop_lon" oftype Coordinate, "zone_id" oftype ZoneRestriction];
+        columns: [
+            "stop_id" oftype integer,
+            "stop_name" oftype text,
+            "stop_lat" oftype Coordinate,
+            "stop_lon" oftype Coordinate,
+            "zone_id" oftype ZoneRestriction,
+        ];
     }
 
-    block TableCreation oftype SQLiteLoader 
-    {
+    block SQLiteImport oftype SQLiteLoader {
         table: "stops";
         file: "./gtfs.sqlite";
     }
 
+    GTFSDownloader
+        -> ZipFileProcessor
+        -> StopsTxtSelector
+        -> TextDataInterpreter
+        -> CSVDataParser
+        -> StopsDataMapping
+        -> SQLiteImport;
 }
